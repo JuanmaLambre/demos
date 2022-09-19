@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "OrbitControls";
+import * as dat from "dat.gui";
 import { loadModels } from "./loader.js";
 
 const modelPaths = [
@@ -14,12 +15,20 @@ const modelPaths = [
   "/assets/palaMecanica/tuerca.dae",
 ];
 
+const guiOptions = {
+  pala: 0,
+  antebrazo: 0,
+  brazo: 0,
+  cabina: 0,
+};
+
 const htmlContainer = document.getElementById("container3D");
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
   logarithmicDepthBuffer: true, // Prevents z-fighting
 });
 let scene, camera, controls;
+let gui;
 
 /** This callback is called whenever the browser window is resized
  */
@@ -34,6 +43,34 @@ function onResize() {
 
   // And update the renderer properties (which will update the canvas DOM element)
   renderer.setSize(htmlContainer.offsetWidth, htmlContainer.offsetHeight);
+}
+
+/** Función llamada sólo una vez para configurar DAT.GUI
+ */
+function setupGUI() {
+  gui = new dat.GUI();
+
+  gui.add(guiOptions, "pala", -3.5, 0.8, 0.1).onChange((angle) => {
+    const pala = scene.getObjectByName("pala");
+    pala.rotation.set(0, 0, angle);
+  });
+
+  gui
+    .add(guiOptions, "antebrazo", -Math.PI / 4, Math.PI / 4, 0.1)
+    .onChange((angle) => {
+      const antebrazo = scene.getObjectByName("antebrazo");
+      antebrazo.rotation.set(0, 0, angle);
+    });
+
+  gui.add(guiOptions, "brazo", -Math.PI / 2, 0, 0.1).onChange((angle) => {
+    const brazo = scene.getObjectByName("brazo");
+    brazo.rotation.set(0, 0, angle);
+  });
+
+  gui.add(guiOptions, "cabina", 0, 2 * Math.PI, 0.1).onChange((angle) => {
+    const cabina = scene.getObjectByName("cabina");
+    cabina.rotation.set(0, angle, 0);
+  });
 }
 
 /** Function called only once to create & setup the scene
@@ -52,29 +89,32 @@ function createScene() {
   const gridHelper = new THREE.GridHelper(1000, 10);
   scene.add(gridHelper);
 
+  const vehiculo = new THREE.Group();
+  vehiculo.name = "vehiculo";
+  scene.add(vehiculo);
+
   loadModels(modelPaths, (models) => {
     models.forEach((model, i) => {
       model.add(new THREE.AxesHelper(20)); // Debugging helpers
-      // model.rotation.set(0, 0, 0); // Arreglamos la rotación de los modelos
       model.position.setX(i * 100 - (models.length * 100) / 2); // Distribuimos las piezas en el eje X para una linda presentación (?)
-      scene.add(model);
+      vehiculo.add(model);
     });
 
-    // solve();
+    solve();
   });
 }
 
 function solve() {
-  const cabina = scene.getObjectByName("cabina");
-  const brazo = scene.getObjectByName("brazo");
-  const antebrazo = scene.getObjectByName("antebrazo");
-  const pala = scene.getObjectByName("pala");
-  const chasis = scene.getObjectByName("chasis");
-  const eje = scene.getObjectByName("eje");
-  const llanta = scene.getObjectByName("llanta");
-  const cubierta = scene.getObjectByName("cubierta");
-  const tuerca = scene.getObjectByName("tuerca");
-  const vehiculo = new THREE.Group();
+  const vehiculo = scene.getObjectByName("vehiculo");
+  const cabina = vehiculo.getObjectByName("cabina");
+  const brazo = vehiculo.getObjectByName("brazo");
+  const antebrazo = vehiculo.getObjectByName("antebrazo");
+  const pala = vehiculo.getObjectByName("pala");
+  const chasis = vehiculo.getObjectByName("chasis");
+  const eje = vehiculo.getObjectByName("eje");
+  const llanta = vehiculo.getObjectByName("llanta");
+  const cubierta = vehiculo.getObjectByName("cubierta");
+  const tuerca = vehiculo.getObjectByName("tuerca");
 
   // **************************************************************
   // Ejercicio:
@@ -93,6 +133,9 @@ function solve() {
   //
   // ***************************************************************
 
+  // Arreglamos la rotación de los modelos
+  vehiculo.children.forEach((child) => child.rotation.set(0, 0, 0));
+
   chasis.position.set(0, 0, 0);
 
   chasis.add(cabina);
@@ -100,7 +143,6 @@ function solve() {
 
   cabina.add(brazo);
   brazo.position.set(20, 20, -10);
-  brazo.rotation.z = -Math.PI / 4;
 
   brazo.add(antebrazo);
   antebrazo.position.set(-102, 0, 0);
@@ -129,10 +171,6 @@ function solve() {
   const eje2 = eje.clone();
   eje2.position.x *= -1;
   chasis.add(eje2);
-
-  vehiculo.add(cabina);
-  vehiculo.add(chasis);
-  scene.add(vehiculo);
 }
 
 /** Function called only once to setup & configure the basic THREE.js components
@@ -166,6 +204,8 @@ function setup() {
   onResize();
 
   createScene();
+
+  setupGUI();
 
   window.scene = scene;
 }

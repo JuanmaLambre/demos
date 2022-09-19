@@ -5,6 +5,7 @@
     "demos": "live-server"
   },
   "dependencies": {
+    "dat.gui": "^0.7.9",
     "live-server": "^1.2.2",
     "path": "^0.12.7",
     "portfinder-sync": "0.0.2",
