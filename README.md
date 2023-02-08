@@ -1,6 +1,8 @@
 # Programación Básica con THREE.js
 
-Este repositorio contiene demos y ejercicios utilizados durante todo el curso.
+Este repositorio contiene demos y ejercicios utilizados durante todo el curso.  
+
+Es necesario hacer una primera instalación corriendo `npm install`
 
 ### Cómo correr las demos
 
